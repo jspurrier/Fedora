@@ -1,3 +1,4 @@
+# Testing Test Branch
 # Cassandra Install
 
 ```
@@ -44,8 +45,8 @@ Start cqlsh using the default superuser name and password:
 Create a new superuser:
 
 ```
-cqlsh> CREATE ROLE <new_super_user> WITH PASSWORD = '<some_secure_password>' 
-    AND SUPERUSER = true 
+cqlsh> CREATE ROLE <new_super_user> WITH PASSWORD = '<some_secure_password>'
+    AND SUPERUSER = true
     AND LOGIN = true;
 ```
 
