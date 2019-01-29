@@ -8,7 +8,7 @@
 `sudo firewall-cmd --add-service=samba --permanent`
 ##### Reload Firewall
 `sudo firewall-cmd --reload`
-#####SELinux for home Directories
+##### SELinux for home Directories
 `sudo setsebool -P samba_enable_home_dirs on`
 ##### Must add a user
 `sudo pdbedit -a username`
