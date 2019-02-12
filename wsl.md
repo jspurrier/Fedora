@@ -8,6 +8,6 @@ https://github.com/WhitewaterFoundry/WSLFedoraRemix/releases
 #### run the .exe file
 #### set the path as needed
 `$userenv = [System.Environment]::GetEnvironmentVariable("Path", "User")
-[System.Environment]::SetEnvironmentVariable("PATH", $userenv + "C:\Users\Administrator\Ubuntu", "User")`
+[System.Environment]::SetEnvironmentVariable("PATH", $userenv + "C:\Users\Username\Path Location", "User")`
 
 #### Thats it
