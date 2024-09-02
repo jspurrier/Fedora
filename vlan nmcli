@@ -1,0 +1,173 @@
+nmcli con add type vlan con-name VLAN30 dev enp1s0 id 30
+
+10.3. Configure 802.1Q VLAN Tagging Using the Command Line Tool, nmcli
+PDF
+To view the available interfaces on the system, issue a command as follows:
+
+~]$ nmcli con show
+NAME         UUID                                  TYPE            DEVICE
+System enp2s0  9c92fad9-6ecb-3e6c-eb4d-8a47c6f50c04  802-3-ethernet  enp2s0
+System enp1s0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  enp1s0
+
+Note that the NAME field in the output always denotes the connection ID. It is not the interface name even though it might look the same. The ID can be used in nmcli connection commands to identify a connection. Use the DEVICE name with other applications such as firewalld.
+To create an 802.1Q VLAN interface on Ethernet interface enp1s0, with VLAN interface VLAN10 and ID 10, issue a command as follows:
+
+~]$ nmcli con add type vlan ifname VLAN10 dev enp1s0 id 10
+Connection 'vlan-VLAN10' (37750b4a-8ef5-40e6-be9b-4fb21a4b6d17) successfully added.
+
+Note that as no con-name was given for the VLAN interface, the name was derived from the interface name by prepending the type. Alternatively, specify a name with the con-name option as follows:
+
+~]$ nmcli con add type vlan con-name VLAN12 dev enp1s0 id 12
+Connection 'VLAN12' (b796c16a-9f5f-441c-835c-f594d40e6533) successfully added.
+
+Assigning Addresses to VLAN Interfaces
+You can use the same nmcli commands to assign static and dynamic interface addresses as with any other interface.
+For example, a command to create a VLAN interface with a static IPv4 address and gateway is as follows:
+
+~]$ nmcli con add type vlan con-name VLAN20 dev enp1s0 id 20 ip4 10.10.10.10/24 \
+gw4 10.10.10.254
+
+To create a VLAN interface with dynamically assigned addressing, issue a command as follows:
+
+~]$ nmcli con add type vlan con-name VLAN30 dev enp1s0 id 30
+
+See Section 3.3.6, “Connecting to a Network Using nmcli” for examples of using nmcli commands to configure interfaces.
+To review the VLAN interfaces created, issue a command as follows:
+
+~]$ nmcli con show
+NAME         UUID                                  TYPE            DEVICE
+VLAN12         4129a37d-4feb-4be5-ac17-14a193821755  vlan            enp1s0.12
+System enp2s0  9c92fad9-6ecb-3e6c-eb4d-8a47c6f50c04  802-3-ethernet  enp2s0
+System enp1s0  5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03  802-3-ethernet  enp1s0
+vlan-VLAN10    1be91581-11c2-461a-b40d-893d42fed4f4  vlan            VLAN10
+
+To view detailed information about the newly configured connection, issue a command as follows:
+
+~]$ nmcli -p con show VLAN12
+===============================================================================
+                      Connection profile details (VLAN12)
+===============================================================================
+connection.id:                          VLAN12
+connection.uuid:                        4129a37d-4feb-4be5-ac17-14a193821755
+connection.interface-name:              --
+connection.type:                        vlan
+connection.autoconnect:                 yes
+…
+-------------------------------------------------------------------------------
+802-3-ethernet.port:                    --
+802-3-ethernet.speed:                   0
+802-3-ethernet.duplex:                  --
+802-3-ethernet.auto-negotiate:          yes
+802-3-ethernet.mac-address:             --
+802-3-ethernet.cloned-mac-address:      --
+802-3-ethernet.mac-address-blacklist:
+802-3-ethernet.mtu:                     auto
+…
+vlan.interface-name:                    --
+vlan.parent:                            enp1s0
+vlan.id:                                12
+vlan.flags:                             0 (NONE)
+vlan.ingress-priority-map:
+vlan.egress-priority-map:
+-------------------------------------------------------------------------------
+===============================================================================
+      Activate connection details (4129a37d-4feb-4be5-ac17-14a193821755)
+===============================================================================
+GENERAL.NAME:                           VLAN12
+GENERAL.UUID:                           4129a37d-4feb-4be5-ac17-14a193821755
+GENERAL.DEVICES:                        enp1s0.12
+GENERAL.STATE:                          activating
+[output truncated]
+
+Further options for the VLAN command are listed in the VLAN section of the nmcli(1) man page. In the man pages the device on which the VLAN is created is referred to as the parent device. In the example above the device was specified by its interface name, enp1s0, it can also be specified by the connection UUID or MAC address.
+To create an 802.1Q VLAN connection profile with ingress priority mapping on Ethernet interface enp2s0, with name VLAN1 and ID 13, issue a command as follows:
+
+~]$ nmcli con add type vlan con-name VLAN1 dev enp2s0 id 13 ingress "2:3,3:5"
+
+To view all the parameters associated with the VLAN created above, issue a command as follows:
+
+~]$ nmcli connection show vlan-VLAN10
+
+To change the MTU, issue a command as follows:
+
+~]$ nmcli connection modify vlan-VLAN10 802.mtu 1496
+
+The MTU setting determines the maximum size of the network layer packet. The maximum size of the payload the link-layer frame can carry in turn limits the network layer MTU. For standard Ethernet frames this means an MTU of 1500 bytes. It should not be necessary to change the MTU when setting up a VLAN as the link-layer header is increased in size by 4 bytes to accommodate the 802.1Q tag.
+At time of writing, connection.interface-name and vlan.interface-name have to be the same (if they are set). They must therefore be changed simultaneously using nmcli's interactive mode. To change a VLAN connections name, issue commands as follows:
+
+~]$ nmcli con edit vlan-VLAN10
+nmcli> set vlan.interface-name superVLAN
+nmcli> set connection.interface-name superVLAN
+nmcli> save
+nmcli> quit
+
+The nmcli utility can be used to set and clear ioctl flags which change the way the 802.1Q code functions. The following VLAN flags are supported by NetworkManager:
+
+    0x01 - reordering of output packet headers
+    0x02 - use GVRP protocol
+    0x04 - loose binding of the interface and its master 
+
+The state of the VLAN is synchronized to the state of the parent or master interface (the interface or device on which the VLAN is created). If the parent interface is set to the “down” administrative state then all associated VLANs are set down and all routes are flushed from the routing table. Flag 0x04 enables a loose binding mode, in which only the operational state is passed from the parent to the associated VLANs, but the VLAN device state is not changed.
+To set a VLAN flag, issue a command as follows:
+
+~]$ nmcli connection modify vlan-VLAN10 vlan.flags 1
+
+See Section 3.3, “Configuring IP Networking with nmcli” for an introduction to nmcli.
+Previous
+Next
+Select page format
+Red Hat logo
+Github
+Reddit
+Youtube
+Learn
+
+    Developer resources
+    Cloud learning hub
+    Interactive labs
+    Training and certification
+    Customer support
+    See all documentation
+
+Try, buy, & sell
+
+    Product trial center
+    Red Hat Marketplace
+    Red Hat Ecosystem Catalog
+    Red Hat Store
+
+Communities
+
+    Customer Portal Community
+    Events
+    How we contribute
+
+About Red Hat Documentation
+
+We help Red Hat users innovate and achieve their goals with our products and services with content they can trust.
+Making open source more inclusive
+
+Red Hat is committed to replacing problematic language in our code, documentation, and web properties. For more details, see the Red Hat Blog.
+About Red Hat
+
+We deliver hardened solutions that make it easier for enterprises to work across platforms and environments, from the core datacenter to the network edge.
+
+    About Red Hat
+    Jobs
+    Events
+    Locations
+    Contact Red Hat
+    Red Hat Blog
+    Diversity, equity, and inclusion
+    Cool Stuff Store
+    Red Hat Summit
+
+All systems operational
+© 2024 Red Hat, Inc.
+
+    Privacy statement
+    Terms of use
+    All policies and guidelines
+    Digital accessibility
+    Cookie preferences
+
